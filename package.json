@@ -1,0 +1,9 @@
+{
+  "name": "studyai-backend",
+  "version": "1.0.0",
+  "description": "StudyAI backend — hides Groq API key from users",
+  "main": "api/chat.js",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}

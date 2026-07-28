@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StudyAI — Homework Helper</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg: #080810;
+      --surface: #0f0f1a;
+      --surface2: #16162a;
+      --surface3: #1e1e35;
+      --border: #252540;
+      --text: #e2e2f0;
+      --muted: #5a5a80;
+      --accent: #7c6fff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      gap: 14px;
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #7c6fff, #ff6b9d);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: white;
+    }
+
+    .logo-name { font-size: 17px; font-weight: 700; letter-spacing: -0.4px; }
+    .logo-name em { font-style: normal; background: linear-gradient(135deg, #7c6fff, #ff6b9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .subject-bar { display: flex; gap: 6px; overflow-x: auto; flex: 1; scrollbar-width: none; padding: 2px 0; }
+    .subject-bar::-webkit-scrollbar { display: none; }
+
+    .subject-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--surface2);
+      color: var(--muted); font-size: 12px; font-weight: 500;
+      cursor: pointer; white-space: nowrap; transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .subject-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .subject-btn:hover, .subject-btn.active { color: var(--text); }
+
+    .main { flex: 1; display: flex; overflow: hidden; }
+
+    .camera-panel {
+      width: 0; overflow: hidden;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      transition: width 0.3s ease;
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+
+    .camera-panel.open { width: 300px; }
+
+    .camera-header {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      letter-spacing: 0.5px; text-transform: uppercase;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .close-camera { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; }
+    .close-camera:hover { color: var(--text); }
+
+    .video-container { position: relative; background: #000; aspect-ratio: 4/3; overflow: hidden; }
+    video { width: 100%; height: 100%; object-fit: cover; }
+
+    .camera-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px;
+      color: var(--muted); font-size: 13px; text-align: center; padding: 20px;
+    }
+
+    .camera-controls { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+
+    .capture-btn {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #7c6fff, #ff6b9d);
+      border: none; border-radius: 12px; color: white;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: opacity 0.2s;
+    }
+
+    .capture-btn:hover { opacity: 0.9; }
+    .capture-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .start-camera-btn {
+      width: 100%; padding: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 13px;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s;
+    }
+
+    .start-camera-btn:hover { border-color: var(--accent); }
+
+    .preview-container { padding: 0 14px; display: none; }
+    .preview-container.visible { display: block; }
+
+    .preview-img { width: 100%; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 8px; }
+
+    .send-photo-btn {
+      width: 100%; padding: 10px;
+      background: rgba(0,229,160,0.15); border: 1px solid rgba(0,229,160,0.3);
+      border-radius: 10px; color: #00e5a0; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+    }
+
+    .send-photo-btn:hover { background: rgba(0,229,160,0.25); }
+
+    canvas { display: none; }
+
+    .chat-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .chat-area {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth;
+    }
+
+    .chat-area::-webkit-scrollbar { width: 3px; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .welcome {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; flex: 1; text-align: center;
+      gap: 14px; padding: 30px 20px; min-height: 300px;
+    }
+
+    .welcome-mark {
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, #7c6fff, #ff6b9d);
+      border-radius: 18px; display: flex; align-items: center;
+      justify-content: center; font-size: 28px; margin-bottom: 4px;
+    }
+
+    .welcome h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .welcome h1 em { font-style: normal; background: linear-gradient(135deg, #7c6fff, #ff6b9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .welcome p { color: var(--muted); font-size: 14px; max-width: 380px; line-height: 1.6; }
+
+    .subject-examples { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 520px; }
+
+    .ex-chip {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 16px; padding: 6px 14px; font-size: 12px;
+      color: var(--muted); cursor: pointer; transition: all 0.2s;
+    }
+
+    .ex-chip:hover { color: var(--text); border-color: var(--accent); background: rgba(124,111,255,0.1); }
+
+    .message {
+      display: flex; gap: 10px; animation: fadeUp 0.25s ease;
+      max-width: 780px; width: 100%; margin: 0 auto;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user { flex-direction: row-reverse; }
+
+    .av {
+      width: 32px; height: 32px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; flex-shrink: 0;
+    }
+
+    .av.ai { background: linear-gradient(135deg, #7c6fff, #ff6b9d); color: white; }
+    .av.user { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 10px; }
+
+    .bubble {
+      padding: 12px 16px; border-radius: 14px;
+      font-size: 14px; line-height: 1.7; max-width: calc(100% - 52px);
+    }
+
+    .message.ai .bubble { background: var(--surface); border: 1px solid var(--border); border-top-left-radius: 3px; }
+    .message.user .bubble { background: rgba(124,111,255,0.12); border: 1px solid rgba(124,111,255,0.2); border-top-right-radius: 3px; }
+
+    .subject-tag {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 10px; margin-bottom: 8px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .bubble img { max-width: 200px; border-radius: 8px; margin-bottom: 8px; display: block; }
+
+    .typing { display: flex; gap: 10px; max-width: 780px; width: 100%; margin: 0 auto; }
+
+    .typing-dots {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; border-top-left-radius: 3px;
+      padding: 12px 16px; display: flex; gap: 4px; align-items: center;
+    }
+
+    .tdot { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+    .tdot:nth-child(2) { animation-delay: 0.2s; }
+    .tdot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .input-area {
+      padding: 12px 20px 16px; border-top: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex; gap: 8px; align-items: flex-end;
+      max-width: 780px; margin: 0 auto;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 10px 12px; transition: border-color 0.2s;
+    }
+
+    .input-row:focus-within { border-color: var(--accent); }
+
+    .camera-toggle {
+      width: 34px; height: 34px; background: var(--surface3);
+      border: 1px solid var(--border); border-radius: 9px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 16px; transition: all 0.2s; color: var(--muted);
+    }
+
+    .camera-toggle:hover, .camera-toggle.active { border-color: var(--accent); background: rgba(124,111,255,0.1); }
+
+    textarea {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px;
+      resize: none; min-height: 22px; max-height: 110px; line-height: 1.5;
+    }
+
+    textarea::placeholder { color: var(--muted); }
+
+    .send-btn {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #7c6fff, #ff6b9d);
+      border: none; border-radius: 9px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .send-btn:hover { opacity: 0.9; }
+    .send-btn:active { transform: scale(0.93); }
+    .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .send-btn svg { width: 14px; height: 14px; fill: white; }
+
+    .input-hint { text-align: center; font-size: 11px; color: var(--muted); margin: 8px auto 0; font-family: 'JetBrains Mono', monospace; max-width: 780px; }
+
+    .error-msg {
+      background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.2);
+      border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #ff4d6d;
+      max-width: 780px; margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">S</div>
+    <div class="logo-name"><em>Study</em>AI</div>
+  </div>
+  <div class="subject-bar" id="subjectBar"></div>
+</header>
+
+<div class="main">
+  <div class="camera-panel" id="cameraPanel">
+    <div class="camera-header">
+      📷 Camera
+      <button class="close-camera" onclick="toggleCamera()">✕</button>
+    </div>
+    <div class="video-container">
+      <video id="video" autoplay playsinline></video>
+      <div class="camera-overlay" id="cameraOverlay">
+        <div style="font-size:40px">📷</div>
+        <p>Point your camera at your homework question</p>
+      </div>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div class="camera-controls">
+      <button class="capture-btn" id="captureBtn" onclick="capturePhoto()" disabled>📸 Capture question</button>
+      <button class="start-camera-btn" id="startCameraBtn" onclick="startCamera()">Start camera</button>
+    </div>
+    <div class="preview-container" id="previewContainer">
+      <img id="previewImg" class="preview-img" alt="Captured"/>
+      <button class="send-photo-btn" onclick="sendPhoto()">✓ Send to StudyAI</button>
+    </div>
+  </div>
+
+  <div class="chat-wrap">
+    <div class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <div class="welcome-mark">📚</div>
+        <h1>Your <em>free</em> homework helper</h1>
+        <p>Pick any subject above, type your question, or use the 📷 camera to photograph your homework. No API key needed — just start asking!</p>
+        <div class="subject-examples">
+          <div class="ex-chip" onclick="useEx(this)">Solve 3x² + 7x - 6 = 0</div>
+          <div class="ex-chip" onclick="useEx(this)">Analyse a quote from Macbeth</div>
+          <div class="ex-chip" onclick="useEx(this)">Explain photosynthesis</div>
+          <div class="ex-chip" onclick="useEx(this)">What causes coastal erosion?</div>
+          <div class="ex-chip" onclick="useEx(this)">Conjugate "aller" in French</div>
+          <div class="ex-chip" onclick="useEx(this)">What were the causes of WW1?</div>
+          <div class="ex-chip" onclick="useEx(this)">What is a cash flow forecast?</div>
+          <div class="ex-chip" onclick="useEx(this)">What materials conduct electricity?</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <button class="camera-toggle" id="cameraToggle" onclick="toggleCamera()" title="Open camera">📷</button>
+        <textarea id="input" placeholder="Ask your homework question..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ⚠️ IMPORTANT: Replace this with your actual Vercel deployment URL after deploying
+const API_URL = '/api/chat';
+
+const SUBJECTS = {
+  general:   { name:'General',         color:'#a29bfe', emoji:'🧠', prompt:`You are StudyAI, a helpful GCSE homework assistant. Answer clearly, break down complex topics into simple steps, and always check your working.` },
+  maths:     { name:'Maths',           color:'#7c6fff', emoji:'∑',  prompt:`You are StudyAI Maths. CRITICAL RULE: NEVER round numbers mid-calculation. Maintain full precision at every step. Only round at the very final step if the question requires it, and state clearly what you rounded to. Label every step (Step 1, Step 2...) and end with a clear "Final Answer:" line. Keep surds, fractions and constants exact until the final step.` },
+  english:   { name:'English',         color:'#ff6b9d', emoji:'✍', prompt:`You are StudyAI English, a GCSE English Literature and Language tutor. For literature use PEE structure (Point, Evidence, Explanation) with context and themes. For language help with reading analysis and writing techniques. Help students develop their own analytical voice.` },
+  science:   { name:'Science',         color:'#00e5a0', emoji:'⚗', prompt:`You are StudyAI Science, a GCSE Biology, Chemistry and Physics tutor. Always identify which science branch applies. Show all calculation working with units at every step. Never round mid-calculation. Use correct scientific terminology and real world examples.` },
+  geography: { name:'Geography',       color:'#ffd166', emoji:'🌍', prompt:`You are StudyAI Geography, a GCSE Geography tutor covering physical and human geography. Use specific case studies. Explain processes with clear cause-and-effect chains. Help structure extended answers. Cover rivers, coasts, urbanisation, development, climate change and more.` },
+  history:   { name:'History',         color:'#fd79a8', emoji:'📜', prompt:`You are StudyAI History, a GCSE History tutor. Help with source analysis, causation, consequence, change and continuity. Structure extended answers clearly. Cover key periods and events with context. Help students form well-argued historical judgements with evidence.` },
+  business:  { name:'Business',        color:'#ff9f43', emoji:'📊', prompt:`You are StudyAI Business, a GCSE Business Studies tutor. Explain concepts with real world examples. Show all calculations with precise working — never round mid-calculation. Structure extended answers using business theory.` },
+  french:    { name:'French',          color:'#55efc4', emoji:'🇫🇷', prompt:`You are StudyAI French, a GCSE French tutor. Help with grammar, vocabulary, translation, reading comprehension and writing tasks. Explain grammatical rules clearly with examples. Correct errors kindly and explain why.` },
+  spanish:   { name:'Spanish',         color:'#fdcb6e', emoji:'🇪🇸', prompt:`You are StudyAI Spanish, a GCSE Spanish tutor. Help with grammar, vocabulary, translation, reading comprehension and writing tasks. Explain grammatical rules clearly with examples. Correct errors kindly and explain why.` },
+  computing: { name:'Computing',       color:'#74b9ff', emoji:'💻', prompt:`You are StudyAI Computing, a GCSE Computer Science tutor. Help with programming, algorithms, data structures, binary, networking, cybersecurity, databases and computational thinking. Show code examples clearly.` },
+  rs:        { name:'RS / Philosophy', color:'#e17055', emoji:'☯', prompt:`You are StudyAI Religious Studies, a GCSE RS and Philosophy tutor. Help with world religions, ethical theories, philosophical arguments and theological debates. Present multiple viewpoints fairly.` },
+  art:       { name:'Art',             color:'#fd79a8', emoji:'🎨', prompt:`You are StudyAI Art, a GCSE Art and Design tutor. Help with art history, analysis of artworks, written components, artist research and critical studies. Explain artistic techniques, movements and contexts.` },
+  music:     { name:'Music',           color:'#a29bfe', emoji:'🎵', prompt:`You are StudyAI Music, a GCSE Music tutor. Help with music theory, harmony, notation, set works analysis, musical elements and composition. Explain concepts like chords, scales, rhythm, texture and structure clearly.` },
+  pe:        { name:'PE Theory',       color:'#00cec9', emoji:'🏃', prompt:`You are StudyAI PE Theory, a GCSE Physical Education theory tutor. Help with anatomy and physiology, components of fitness, training principles, sports psychology, socio-cultural influences and health.` },
+  btec:      { name:'BTEC Sport',      color:'#54a0ff', emoji:'🏋', prompt:`You are StudyAI BTEC Sport, a BTEC Sport tutor. Help with anatomy, fitness testing, training programme design, sports psychology, nutrition and sports injuries. Help with assignment writing and coursework structure.` },
+  dt:        { name:'D&T',             color:'#ff6348', emoji:'⚙', prompt:`You are StudyAI Design and Technology, a GCSE D&T tutor. Help with materials, manufacturing processes, product design, CAD/CAM, sustainability and iterative design.` }
+};
+
+let currentSubject = 'general';
+let messages = [];
+let isLoading = false;
+let capturedImageData = null;
+let stream = null;
+
+// Build subject bar
+const bar = document.getElementById('subjectBar');
+Object.entries(SUBJECTS).forEach(([key, s]) => {
+  const btn = document.createElement('button');
+  btn.className = 'subject-btn' + (key === 'general' ? ' active' : '');
+  btn.dataset.subject = key;
+  btn.onclick = () => setSubject(btn);
+  btn.innerHTML = `<span class="dot" style="background:${s.color}"></span>${s.name}`;
+  bar.appendChild(btn);
+});
+
+function setSubject(btn) {
+  document.querySelectorAll('.subject-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSubject = btn.dataset.subject;
+  messages = [];
+  document.getElementById('input').placeholder = `Ask your ${SUBJECTS[currentSubject].name} question...`;
+}
+
+function toggleCamera() {
+  const panel = document.getElementById('cameraPanel');
+  const toggle = document.getElementById('cameraToggle');
+  panel.classList.toggle('open');
+  toggle.classList.toggle('active');
+  if (!panel.classList.contains('open') && stream) stopCamera();
+}
+
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    document.getElementById('video').srcObject = stream;
+    document.getElementById('cameraOverlay').style.display = 'none';
+    document.getElementById('captureBtn').disabled = false;
+    document.getElementById('startCameraBtn').style.display = 'none';
+  } catch { alert('Camera access denied. Please allow camera access.'); }
+}
+
+function stopCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  document.getElementById('captureBtn').disabled = true;
+  document.getElementById('startCameraBtn').style.display = 'block';
+  document.getElementById('cameraOverlay').style.display = 'flex';
+}
+
+function capturePhoto() {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+  document.getElementById('previewImg').src = capturedImageData;
+  document.getElementById('previewContainer').classList.add('visible');
+}
+
+function sendPhoto() {
+  if (!capturedImageData) return;
+  const s = SUBJECTS[currentSubject];
+  addMessage('user', `[Photo of ${s.name} homework question]`, capturedImageData);
+  messages.push({ role: 'user', content: `Please help me with this ${s.name} homework question from the image. Show all working clearly.` });
+  capturedImageData = null;
+  document.getElementById('previewContainer').classList.remove('visible');
+  toggleCamera();
+  callAPI();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 110) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function useEx(el) {
+  document.getElementById('input').value = el.textContent;
+  autoResize(document.getElementById('input'));
+  sendMessage();
+}
+
+function hideWelcome() {
+  const w = document.getElementById('welcome');
+  if (w) w.remove();
+}
+
+function scrollBottom() {
+  const a = document.getElementById('chatArea');
+  a.scrollTop = a.scrollHeight;
+}
+
+function addMessage(role, content, imageData) {
+  hideWelcome();
+  const area = document.getElementById('chatArea');
+  const s = SUBJECTS[currentSubject];
+
+  const msg = document.createElement('div');
+  msg.className = `message ${role}`;
+
+  const av = document.createElement('div');
+  av.className = `av ${role}`;
+  if (role === 'ai') {
+    av.style.background = `linear-gradient(135deg, ${s.color}, ${s.color}88)`;
+    av.textContent = s.emoji;
+  } else {
+    av.textContent = 'Me';
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  if (role === 'ai') {
+    const tag = document.createElement('div');
+    tag.className = 'subject-tag';
+    tag.style.background = s.color + '22';
+    tag.style.color = s.color;
+    tag.textContent = s.name;
+    bubble.appendChild(tag);
+  }
+
+  if (imageData) {
+    const img = document.createElement('img');
+    img.src = imageData;
+    bubble.appendChild(img);
+  }
+
+  const text = document.createElement('div');
+  text.innerHTML = formatText(content);
+  bubble.appendChild(text);
+
+  msg.appendChild(av);
+  msg.appendChild(bubble);
+  area.appendChild(msg);
+  scrollBottom();
+}
+
+function formatText(t) {
+  t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/`(.*?)`/g, '<code style="background:rgba(124,111,255,0.15);padding:1px 5px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:12px">$1</code>');
+  t = t.replace(/\n/g, '<br>');
+  return t;
+}
+
+function showTyping() {
+  hideWelcome();
+  const area = document.getElementById('chatArea');
+  const s = SUBJECTS[currentSubject];
+  const t = document.createElement('div');
+  t.className = 'typing'; t.id = 'typing';
+  t.innerHTML = `<div class="av ai" style="background:linear-gradient(135deg,${s.color},${s.color}88)">${s.emoji}</div><div class="typing-dots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;
+  area.appendChild(t);
+  scrollBottom();
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+  input.style.height = 'auto';
+  addMessage('user', text);
+  messages.push({ role: 'user', content: text });
+  showTyping();
+  await callAPI();
+}
+
+async function callAPI() {
+  const s = SUBJECTS[currentSubject];
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: messages,
+        systemPrompt: s.prompt
+      })
+    });
+
+    const data = await res.json();
+    removeTyping();
+
+    if (data.reply) {
+      messages.push({ role: 'assistant', content: data.reply });
+      addMessage('ai', data.reply);
+    } else if (data.error) {
+      showError(`Error: ${data.error}`);
+    } else {
+      showError('Something went wrong. Please try again.');
+    }
+  } catch {
+    removeTyping();
+    showError('Connection error. Make sure the server is running.');
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('input').focus();
+}
+
+function showError(msg) {
+  const area = document.getElementById('chatArea');
+  const err = document.createElement('div');
+  err.className = 'error-msg';
+  err.textContent = '⚠ ' + msg;
+  area.appendChild(err);
+  scrollBottom();
+}
+</script>
+</body>
+</html>
