@@ -353,6 +353,14 @@
           <div class="ex-chip" onclick="useEx(this)">What is a cash flow forecast?</div>
           <div class="ex-chip" onclick="useEx(this)">What materials conduct electricity?</div>
         </div>
+        <p style="margin-top:22px;font-size:12px;color:var(--muted);line-height:1.9">GCSE help guides:
+          <a href="/gcse-maths-help.html" style="color:inherit">Maths</a> ·
+          <a href="/gcse-english-help.html" style="color:inherit">English</a> ·
+          <a href="/gcse-science-help.html" style="color:inherit">Science</a> ·
+          <a href="/gcse-geography-help.html" style="color:inherit">Geography</a> ·
+          <a href="/gcse-history-help.html" style="color:inherit">History</a> ·
+          <a href="/gcse-business-help.html" style="color:inherit">Business</a> ·
+          <a href="/gcse-computer-science-help.html" style="color:inherit">Computing</a></p>
       </div>
     </div>
 
@@ -409,6 +417,13 @@ Object.entries(SUBJECTS).forEach(([key, s]) => {
   btn.innerHTML = `<span class="dot" style="background:${s.color}"></span>${s.name}`;
   bar.appendChild(btn);
 });
+
+// Open on a subject when arriving from a subject page, e.g. /?subject=maths
+try {
+  const wanted = new URLSearchParams(location.search).get('subject');
+  const wantedBtn = wanted && bar.querySelector(`[data-subject="${CSS.escape(wanted)}"]`);
+  if (wantedBtn) setSubject(wantedBtn);
+} catch {}
 
 function setSubject(btn) {
   document.querySelectorAll('.subject-btn').forEach(b => b.classList.remove('active'));
