@@ -30,8 +30,11 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        max_tokens: 1024,
+        // Groq retired llama-3.3-70b-versatile on 16 Aug 2026. Override with GROQ_MODEL in Vercel if it changes again.
+        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+        // gpt-oss "thinks" first; thinking tokens count towards this limit, so keep it roomy.
+        max_completion_tokens: 4096,
+        reasoning_effort: 'low',
         messages: [{ role: 'system', content: systemPrompt.slice(0, 2000) }, ...trimmed]
       })
     });
@@ -42,6 +45,11 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: data.error.message });
     }
 
+    const reply = data.choices?.[0]?.message?.content;
+    if (!reply) {
+      return res.status(502).json({ error: 'The AI did not return an answer. Please try again.' });
+    }
+
     // Only count a question once it has actually been answered.
     let remaining = null;
     if (!premium) {
@@ -50,7 +58,7 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      reply: data.choices[0].message.content,
+      reply,
       premium,
       remaining
     });
