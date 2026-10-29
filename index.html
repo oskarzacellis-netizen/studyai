@@ -647,7 +647,7 @@ async function startCheckout() {
     throw new Error(data.error || 'No checkout URL');
   } catch (e) {
     btn.disabled = false; btn.textContent = 'Upgrade to Premium';
-    showError('Could not open checkout. Please try again.');
+    showError(e.message && e.message !== 'No checkout URL' ? e.message : 'Could not open checkout. Please try again.');
   }
 }
 

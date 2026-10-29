@@ -22,6 +22,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
+    console.error('checkout failed:', err.message);
     return res.status(500).json({ error: 'Could not start checkout: ' + err.message });
   }
 }
