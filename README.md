@@ -62,3 +62,20 @@ Groq's free tier is very generous:
 ## Want to add more subjects?
 Open index.html and find the SUBJECTS object.
 Add a new entry following the same pattern as the existing subjects.
+
+---
+
+## Premium (Stripe) setup
+
+Add these in Vercel → Settings → Environment Variables, then redeploy:
+
+| Name | Value |
+|---|---|
+| `GROQ_API_KEY` | your Groq key |
+| `STRIPE_SECRET_KEY` | Stripe secret key (`sk_test_...` while testing, `sk_live_...` when live) |
+| `STRIPE_PRICE_ID` | the Price ID of the £4.99/month product (`price_...`) |
+| `SESSION_SECRET` | any long random string (used to sign cookies) |
+| `SITE_URL` | optional, e.g. `https://your-site.vercel.app` |
+
+Users get 10 free questions (tracked in a signed cookie), then see the upgrade box.
+Never put secret keys in the code or GitHub.

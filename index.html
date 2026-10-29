@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>StudyAI — Homework Helper</title>
+  <title>StudyAI — Free AI GCSE Homework Helper</title>
+  <meta name="description" content="StudyAI is an AI homework helper for GCSE students. Get step-by-step help in Maths, Science, English, History, Geography and more. 10 free questions, then unlimited with Premium."/>
+  <meta property="og:title" content="StudyAI — Free AI GCSE Homework Helper"/>
+  <meta property="og:description" content="Step-by-step GCSE homework help in every subject. Try 10 questions free."/>
+  <meta property="og:type" content="website"/>
+  <meta name="theme-color" content="#080810"/>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -281,6 +286,20 @@
       border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #ff4d6d;
       max-width: 780px; margin: 0 auto;
     }
+    .plan-badge { margin-left:auto; flex-shrink:0; font-size:12px; font-weight:600; padding:6px 12px;
+      border-radius:999px; background:var(--surface3); color:var(--muted); border:1px solid var(--border); }
+    .plan-badge.low { color:#ffb86b; border-color:#ffb86b55; }
+    .plan-badge.pro { color:#fff; background:linear-gradient(135deg,#7c6fff,#ff6b9d); border-color:transparent; }
+    .paywall { margin:18px auto; max-width:440px; text-align:center; padding:26px 22px; border-radius:18px;
+      background:var(--surface2); border:1px solid var(--accent); }
+    .paywall h2 { font-size:19px; margin-bottom:8px; }
+    .paywall p { font-size:14px; color:var(--muted); line-height:1.5; margin-bottom:6px; }
+    .paywall .price { font-size:30px; font-weight:700; color:var(--text); margin:12px 0 2px; }
+    .paywall .price small { font-size:14px; color:var(--muted); font-weight:500; }
+    .upgrade-btn { margin-top:14px; width:100%; padding:13px; border:0; border-radius:12px; cursor:pointer;
+      font-size:15px; font-weight:600; color:#fff; background:linear-gradient(135deg,#7c6fff,#ff6b9d); }
+    .upgrade-btn:disabled { opacity:.6; cursor:wait; }
+    .paywall .fine { font-size:12px; margin-top:10px; margin-bottom:0; }
   </style>
 </head>
 <body>
@@ -291,6 +310,7 @@
     <div class="logo-name"><em>Study</em>AI</div>
   </div>
   <div class="subject-bar" id="subjectBar"></div>
+  <div class="plan-badge" id="planBadge"></div>
 </header>
 
 <div class="main">
@@ -567,9 +587,14 @@ async function callAPI() {
     const data = await res.json();
     removeTyping();
 
-    if (data.reply) {
+    if (res.status === 402) {
+      messages.pop(); // don't keep the unanswered question in history
+      updateBadge({ premium: false, remaining: 0 });
+      showPaywall();
+    } else if (data.reply) {
       messages.push({ role: 'assistant', content: data.reply });
       addMessage('ai', data.reply);
+      updateBadge(data);
     } else if (data.error) {
       showError(`Error: ${data.error}`);
     } else {
@@ -584,6 +609,64 @@ async function callAPI() {
   document.getElementById('sendBtn').disabled = false;
   document.getElementById('input').focus();
 }
+
+// ---------- plan / paywall ----------
+function updateBadge(s) {
+  const b = document.getElementById('planBadge');
+  if (s.premium) { b.textContent = '✨ Premium'; b.className = 'plan-badge pro'; }
+  else if (typeof s.remaining === 'number') {
+    b.textContent = s.remaining === 0 ? 'No free questions left'
+      : `${s.remaining} free question${s.remaining === 1 ? '' : 's'} left`;
+    b.className = 'plan-badge' + (s.remaining <= 3 ? ' low' : '');
+  }
+}
+
+function showPaywall() {
+  if (document.getElementById('paywall')) return;
+  const area = document.getElementById('chatArea');
+  const box = document.createElement('div');
+  box.className = 'paywall'; box.id = 'paywall';
+  box.innerHTML = `
+    <h2>You've used your 10 free questions</h2>
+    <p>Go Premium for unlimited homework help across every subject.</p>
+    <div class="price">£4.99 <small>/ month</small></div>
+    <p>Cancel any time.</p>
+    <button class="upgrade-btn" id="upgradeBtn" onclick="startCheckout()">Upgrade to Premium</button>
+    <p class="fine">Secure payment by Stripe. If you're under 18, ask a parent or guardian first.</p>`;
+  area.appendChild(box);
+  scrollBottom();
+}
+
+async function startCheckout() {
+  const btn = document.getElementById('upgradeBtn');
+  btn.disabled = true; btn.textContent = 'Opening secure checkout…';
+  try {
+    const res = await fetch('/api/checkout', { method: 'POST' });
+    const data = await res.json();
+    if (data.url) { window.location.href = data.url; return; }
+    throw new Error(data.error || 'No checkout URL');
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Upgrade to Premium';
+    showError('Could not open checkout. Please try again.');
+  }
+}
+
+async function initPlan() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const sid = params.get('session_id');
+    if (sid) {
+      const r = await fetch('/api/verify?session_id=' + encodeURIComponent(sid));
+      const v = await r.json();
+      history.replaceState(null, '', location.pathname);
+      if (v.premium) addMessage('ai', "🎉 You're Premium now — unlimited questions. Thanks for supporting StudyAI!");
+      else showError("We couldn't confirm your payment yet. If you were charged, refresh in a minute.");
+    }
+    const res = await fetch('/api/status');
+    updateBadge(await res.json());
+  } catch { /* badge just stays empty */ }
+}
+initPlan();
 
 function showError(msg) {
   const area = document.getElementById('chatArea');
