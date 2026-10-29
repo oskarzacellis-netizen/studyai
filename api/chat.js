@@ -35,7 +35,7 @@ export default async function handler(req, res) {
         // gpt-oss "thinks" first; thinking tokens count towards this limit, so keep it roomy.
         max_completion_tokens: 4096,
         reasoning_effort: 'low',
-        messages: [{ role: 'system', content: systemPrompt.slice(0, 2000) }, ...trimmed]
+        messages: [{ role: 'system', content: systemPrompt.slice(0, 2000) + '\n\nFORMATTING RULE: write all maths in plain text a student could type, e.g. x^2, sqrt(5), (a+b)/2, 3x^2 + 7x - 6 = 0. NEVER use LaTeX, never use \\( \\), \\[ \\], $ signs or \\frac. Use **bold** for headings and short lines, not markdown tables or # headings.' }, ...trimmed]
       })
     });
 
