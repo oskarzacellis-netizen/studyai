@@ -71,6 +71,14 @@
       font-family: 'Inter', sans-serif;
     }
 
+    .subject-btn { flex-shrink: 0; }
+    .subject-bar { min-width: 0; -webkit-overflow-scrolling: touch; }
+    @media (max-width: 700px) {
+      header { flex-wrap: wrap; padding: 10px 14px; gap: 8px 10px; }
+      .logo { order: 1; }
+      .plan-badge { order: 2; margin-left: auto; }
+      .subject-bar { order: 3; flex: 0 0 100%; width: 100%; padding: 2px 0 4px; }
+    }
     .subject-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .subject-btn:hover, .subject-btn.active { color: var(--text); }
 
