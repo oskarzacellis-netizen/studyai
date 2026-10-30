@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GCSE Grade Calculator (9-1) — Free | StudyAI</title>
+<meta name="description" content="Free GCSE grade calculator. Enter your paper marks and your boundaries to see your 9-1 grade and what you need in your remaining papers."/>
+<link rel="canonical" href="https://studyai-chi-lime.vercel.app/gcse-grade-calculator.html"/>
+<meta property="og:title" content="GCSE Grade Calculator (9-1) — Free | StudyAI"/>
+<meta property="og:description" content="Free GCSE grade calculator. Enter your paper marks and your boundaries to see your 9-1 grade and what you need in your remaining papers."/>
+<style>:root{--bg:#080810;--surface:#0f0f1a;--surface2:#16162a;--border:#252540;--text:#e2e2f0;--muted:#8a8ab0;--accent:#7c6fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:24px 16px 64px}
+main{max-width:720px;margin:0 auto}
+a{color:var(--accent)}
+.back{display:inline-block;margin-bottom:18px;font-size:14px;text-decoration:none}
+h1{font-size:28px;margin-bottom:6px}h2{font-size:18px;margin:26px 0 8px}
+p,li{font-size:15px;color:#c9c9e0;margin-bottom:10px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin:16px 0}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;font-family:inherit}
+.row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}.row>*{flex:1;min-width:90px}
+button,.cta{padding:11px 18px;border-radius:12px;border:0;cursor:pointer;font-size:14px;font-weight:600;color:#fff;background:linear-gradient(135deg,#7c6fff,#ff6b9d);text-decoration:none;display:inline-block;font-family:inherit}
+button.alt{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.big{font-size:44px;font-weight:700;background:linear-gradient(135deg,#7c6fff,#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.fine{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px 6px;border-bottom:1px solid var(--border);text-align:left}
+.promo{margin-top:28px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="/">← StudyAI</a>
+<h1>📊 GCSE Grade Calculator</h1>
+<p class="sub">Enter your marks, see your 9–1 grade, and find out what you need in the papers you haven't sat yet.</p>
+<div class="box">
+<strong>1. Your papers</strong>
+<div id="papers"></div>
+<button class="alt" style="margin-top:10px" onclick="addPaper()">+ Add paper</button>
+<p class="fine" style="margin-top:8px">Leave "Your mark" empty for a paper you haven't sat yet.</p>
+</div>
+<div class="box">
+<strong>2. Grade boundaries (% of total marks)</strong>
+<p class="fine">Boundaries change every year and differ by exam board and subject. These are rough starting values. Replace them with the real ones from your board (AQA, Edexcel, OCR, WJEC) for the best answer.</p>
+<table id="bounds"></table>
+</div>
+<button onclick="calc()">Work out my grade</button>
+<div class="box" id="out" style="display:none"></div>
+<h2>How it works</h2>
+<p>Your marks are added up and turned into a percentage of the total marks available. That percentage is compared with the boundary for each grade. If you haven't sat every paper yet, the calculator shows how many marks you still need for each grade.</p>
+<p class="fine">This is an estimate, not an official result. Real boundaries are only published after the exams.</p>
+<div class="box promo"><strong>Stuck on a question?</strong>
+<p style="margin-top:6px">StudyAI explains GCSE homework step by step. Made by a GCSE student. Your first 10 questions are free.</p>
+<a class="cta" href="/">Try StudyAI free</a></div>
+<p class="fine" style="margin-top:20px"><a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a></p>
+</main>
+<script>
+const DEF={9:78,8:68,7:58,6:48,5:38,4:28,3:19,2:11,1:4};
+const bt=document.getElementById('bounds');
+bt.innerHTML='<tr><th>Grade</th><th>Boundary %</th></tr>'+Object.keys(DEF).sort((a,b)=>b-a).map(g=>`<tr><td>${g}</td><td><input type="number" min="0" max="100" step="0.5" data-g="${g}" value="${DEF[g]}"></td></tr>`).join('');
+let n=0;
+function addPaper(){n++;const d=document.createElement('div');d.className='row';
+ d.innerHTML=`<div><label>Paper ${n} name</label><input class="pn" value="Paper ${n}"></div><div><label>Your mark</label><input class="pm" type="number" min="0" inputmode="numeric"></div><div><label>Out of</label><input class="pt" type="number" min="1" value="80" inputmode="numeric"></div>`;
+ document.getElementById('papers').appendChild(d);}
+addPaper();addPaper();addPaper();
+function calc(){
+ const rows=[...document.querySelectorAll('#papers .row')];
+ let got=0,sat=0,total=0,left=0;
+ for(const r of rows){const t=+r.querySelector('.pt').value;const mv=r.querySelector('.pm').value;
+  if(!(t>0))continue;total+=t;
+  if(mv===''){left+=t;continue}
+  const m=+mv;if(m<0||m>t){out('<p>Check "'+r.querySelector('.pn').value+'": your mark can\'t be more than the total.</p>');return}
+  got+=m;sat+=t;}
+ if(!total){out('<p>Add at least one paper with a total mark.</p>');return}
+ const b=[...document.querySelectorAll('#bounds input')].map(i=>({g:+i.dataset.g,p:+i.value})).sort((a,b)=>b.g-a.g);
+ let h='';
+ if(sat>0){const pct=got/total*100;const sofar=got/sat*100;
+  const cur=b.find(x=>pct>=x.p);
+  h+=`<p>Marks so far: <strong>${got}/${sat}</strong> (${sofar.toFixed(1)}% of the papers you've sat)</p>`;
+  if(left===0){h+=`<div class="big">${cur?cur.g:'U'}</div><p>${cur?'Estimated grade '+cur.g:'Below the lowest boundary (ungraded)'} (${pct.toFixed(1)}% overall)</p>`}
+  else{const proj=b.find(x=>sofar>=x.p);
+   h+=`<p>If you keep scoring ${sofar.toFixed(0)}% in the rest, you'd get about:</p><div class="big">${proj?proj.g:'U'}</div>`;}
+ }
+ if(left>0){h+=`<h2>Marks needed in the ${left} marks left</h2><table><tr><th>Grade</th><th>Total needed</th><th>From remaining</th><th>That's</th></tr>`+
+  b.map(x=>{const need=Math.ceil(x.p/100*total);const rem=need-got;
+   const txt=rem<=0?'<span style="color:#00e5a0">Already there</span>':rem>left?'<span style="color:#ff6b9d">Not possible</span>':(rem/left*100).toFixed(0)+'% of remaining';
+   return `<tr><td>${x.g}</td><td>${need}/${total}</td><td>${rem<=0?0:rem>left?'-':rem}</td><td>${txt}</td></tr>`}).join('')+'</table>';}
+ out(h);}
+function out(h){const o=document.getElementById('out');o.innerHTML=h;o.style.display='block';o.scrollIntoView({behavior:'smooth',block:'nearest'})}
+</script>
+</body>
+</html>

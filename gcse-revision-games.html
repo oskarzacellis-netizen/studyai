@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Free GCSE Revision Games — Maths Sprint & Science Match | StudyAI</title>
+<meta name="description" content="Free GCSE revision games: a 60-second maths sprint and a science key-term memory match. No sign-up."/>
+<link rel="canonical" href="https://studyai-chi-lime.vercel.app/gcse-revision-games.html"/>
+<meta property="og:title" content="Free GCSE Revision Games — Maths Sprint & Science Match | StudyAI"/>
+<meta property="og:description" content="Free GCSE revision games: a 60-second maths sprint and a science key-term memory match. No sign-up."/>
+<style>:root{--bg:#080810;--surface:#0f0f1a;--surface2:#16162a;--border:#252540;--text:#e2e2f0;--muted:#8a8ab0;--accent:#7c6fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:24px 16px 64px}
+main{max-width:720px;margin:0 auto}
+a{color:var(--accent)}
+.back{display:inline-block;margin-bottom:18px;font-size:14px;text-decoration:none}
+h1{font-size:28px;margin-bottom:6px}h2{font-size:18px;margin:26px 0 8px}
+p,li{font-size:15px;color:#c9c9e0;margin-bottom:10px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin:16px 0}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;font-family:inherit}
+.row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}.row>*{flex:1;min-width:90px}
+button,.cta{padding:11px 18px;border-radius:12px;border:0;cursor:pointer;font-size:14px;font-weight:600;color:#fff;background:linear-gradient(135deg,#7c6fff,#ff6b9d);text-decoration:none;display:inline-block;font-family:inherit}
+button.alt{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.big{font-size:44px;font-weight:700;background:linear-gradient(135deg,#7c6fff,#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.fine{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px 6px;border-bottom:1px solid var(--border);text-align:left}
+.promo{margin-top:28px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="/">← StudyAI</a>
+<h1>🎮 GCSE Revision Games</h1>
+<p class="sub">Short games that actually help you revise. No sign-up.</p>
+<div class="box">
+<h2 style="margin-top:0">⚡ 60-second maths sprint</h2>
+<p class="fine">Quick mental maths: as many correct answers as you can in 60 seconds.</p>
+<select id="lvl"><option value="1">Easy: add &amp; subtract</option><option value="2" selected>Medium: times tables</option><option value="3">Hard: squares &amp; percentages</option></select>
+<div style="margin-top:10px"><button onclick="startSprint()">Start</button> <span id="sTime" class="fine"></span> <span id="sScore" class="fine"></span></div>
+<div id="sQ" style="font-size:32px;font-weight:700;margin:14px 0"></div>
+<input id="sAns" inputmode="numeric" placeholder="Answer, then press Enter" style="display:none" onkeydown="if(event.key==='Enter')submitAns()">
+<p id="sBest" class="fine"></p>
+</div>
+<div class="box">
+<h2 style="margin-top:0">🧠 Science key-term match</h2>
+<p class="fine">Flip two cards to match each key term with its meaning. Fewer flips is better.</p>
+<button onclick="startMatch()">New game</button> <span id="mFlips" class="fine"></span>
+<div id="grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px"></div>
+</div>
+<div class="box promo"><strong>Stuck on a question?</strong>
+<p style="margin-top:6px">StudyAI explains GCSE homework step by step. Made by a GCSE student. Your first 10 questions are free.</p>
+<a class="cta" href="/">Try StudyAI free</a></div>
+<p class="fine" style="margin-top:20px"><a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a></p>
+</main>
+<script>
+let best=0;try{best=+localStorage.getItem('sai_best')||0}catch{}
+document.getElementById('sBest').textContent=best?'Your best: '+best:'';
+let sc,t,iv,ans;
+const r=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+function q(){const l=+document.getElementById('lvl').value;let t;
+ if(l===1){const a=r(10,99),b=r(10,99);t=Math.random()<.5?[a+' + '+b,a+b]:[Math.max(a,b)+' − '+Math.min(a,b),Math.abs(a-b)]}
+ else if(l===2){const a=r(2,12),b=r(2,12);t=[a+' × '+b,a*b]}
+ else{if(Math.random()<.5){const a=r(11,25);t=[a+'²',a*a]}else{const p=[10,20,25,50,5][r(0,4)],v=r(1,20)*20;t=[p+'% of '+v,p*v/100]}}
+ ans=t[1];document.getElementById('sQ').textContent=t[0]+' = ?'}
+function startSprint(){sc=0;t=60;clearInterval(iv);
+ const a=document.getElementById('sAns');a.style.display='block';a.value='';a.focus();
+ document.getElementById('sScore').textContent='Score: 0';document.getElementById('sTime').textContent='Time: 60';q();
+ iv=setInterval(()=>{t--;document.getElementById('sTime').textContent='Time: '+t;if(t<=0){clearInterval(iv);end()}},1000)}
+function submitAns(){if(t<=0)return;const a=document.getElementById('sAns');
+ if(a.value.trim()!==''&&+a.value===ans){sc++;document.getElementById('sScore').textContent='Score: '+sc}
+ a.value='';q()}
+function end(){document.getElementById('sAns').style.display='none';
+ document.getElementById('sQ').textContent='Time up! You scored '+sc;
+ if(sc>best){best=sc;try{localStorage.setItem('sai_best',best)}catch{}}
+ document.getElementById('sBest').textContent='Your best: '+best}
+const PAIRS=[['Mitosis','Cell division that makes two identical cells'],['Enzyme','A biological catalyst that speeds up reactions'],['Osmosis','Movement of water across a partially permeable membrane'],['Photosynthesis','Plants make glucose using light, water and carbon dioxide'],['Displacement','Distance in a straight line from start to finish, with direction'],['Isotope','Atoms of the same element with different numbers of neutrons'],['Exothermic','A reaction that transfers energy to the surroundings'],['Conduction','Heat transfer through a solid by vibrating particles']];
+let first=null,lock=false,flips=0,found=0;
+function startMatch(){const cards=[];PAIRS.slice().sort(()=>Math.random()-.5).slice(0,6).forEach((p,i)=>{cards.push({id:i,t:p[0]});cards.push({id:i,t:p[1]})});
+ cards.sort(()=>Math.random()-.5);flips=0;found=0;first=null;lock=false;document.getElementById('mFlips').textContent='';
+ const g=document.getElementById('grid');g.innerHTML='';
+ cards.forEach(c=>{const b=document.createElement('button');b.className='alt';b.style.cssText='min-height:76px;font-size:12px;font-weight:500';b.dataset.id=c.id;b.dataset.t=c.t;b.textContent='?';b.onclick=()=>flip(b);g.appendChild(b)})}
+function flip(b){if(lock||b.disabled||b===first)return;b.textContent=b.dataset.t;
+ if(!first){first=b;return}
+ flips++;document.getElementById('mFlips').textContent='Flips: '+flips;
+ if(first.dataset.id===b.dataset.id){first.disabled=b.disabled=true;first.style.borderColor=b.style.borderColor='#00e5a0';first=null;found++;
+  if(found===6)document.getElementById('mFlips').textContent='Done in '+flips+' flips! 🎉'}
+ else{lock=true;const f=first;first=null;setTimeout(()=>{f.textContent='?';b.textContent='?';lock=false},900)}}
+startMatch();
+</script>
+</body>
+</html>
