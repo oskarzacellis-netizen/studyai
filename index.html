@@ -300,6 +300,26 @@
     .upgrade-btn { margin-top:14px; width:100%; padding:13px; border:0; border-radius:12px; cursor:pointer;
       font-size:15px; font-weight:600; color:#fff; background:linear-gradient(135deg,#7c6fff,#ff6b9d); }
     .upgrade-btn:disabled { opacity:.6; cursor:wait; }
+    .tools-row { max-width:780px; margin:0 auto 8px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:12px; color:var(--muted); }
+    .board-btn, .plan-open { background:var(--surface2); border:1px solid var(--border); color:var(--muted); border-radius:999px;
+      padding:4px 11px; font-size:12px; cursor:pointer; font-family:inherit; }
+    .board-btn.active { color:var(--text); border-color:var(--accent); background:rgba(124,111,255,0.15); }
+    .plan-open { margin-left:auto; color:var(--text); }
+    .plan-modal { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:50; padding:16px; }
+    .plan-modal.open { display:flex; }
+    .plan-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px; width:100%; max-width:420px; max-height:90vh; overflow:auto; }
+    .plan-box h2 { font-size:18px; margin-bottom:4px; }
+    .plan-box label { display:block; font-size:12px; color:var(--muted); margin:14px 0 6px; }
+    .plan-box input[type=date], .plan-box select { width:100%; padding:10px; border-radius:10px; border:1px solid var(--border);
+      background:var(--surface2); color:var(--text); font-size:14px; font-family:inherit; }
+    .plan-subjects { display:flex; flex-wrap:wrap; gap:6px; }
+    .plan-subjects label { margin:0; display:inline-flex; align-items:center; gap:5px; background:var(--surface2); border:1px solid var(--border);
+      border-radius:999px; padding:5px 10px; font-size:12px; color:var(--text); cursor:pointer; }
+    .plan-err { color:#ff6b9d; font-size:12px; margin-top:10px; min-height:14px; }
+    .plan-actions { display:flex; gap:8px; margin-top:12px; }
+    .plan-actions button { flex:1; padding:12px; border-radius:12px; border:0; cursor:pointer; font-size:14px; font-weight:600; font-family:inherit; }
+    .plan-cancel { background:var(--surface2); color:var(--muted); }
+    .plan-go { background:linear-gradient(135deg,#7c6fff,#ff6b9d); color:#fff; }
     .paywall .fine { font-size:12px; margin-top:10px; margin-bottom:0; }
   </style>
 </head>
@@ -343,7 +363,7 @@
       <div class="welcome" id="welcome">
         <div class="welcome-mark">📚</div>
         <h1>Your <em>free</em> homework helper</h1>
-        <p>Pick any subject above, type your question, or use the 📷 camera to photograph your homework. No API key needed — just start asking!</p>
+        <p>Pick a subject above, choose your exam board, and type your question. Made by a GCSE student, for GCSE students — your first 10 questions are free.</p>
         <div class="subject-examples">
           <div class="ex-chip" onclick="useEx(this)">Solve 3x² + 7x - 6 = 0</div>
           <div class="ex-chip" onclick="useEx(this)">Analyse a quote from Macbeth</div>
@@ -366,8 +386,12 @@
     </div>
 
     <div class="input-area">
+      <div class="tools-row" id="toolsRow">
+        <span>Exam board:</span>
+        <span id="boardBtns"></span>
+        <button class="plan-open" onclick="openPlan()">📅 Revision plan</button>
+      </div>
       <div class="input-row">
-        <button class="camera-toggle" id="cameraToggle" onclick="toggleCamera()" title="Open camera">📷</button>
         <textarea id="input" placeholder="Ask your homework question..." rows="1"
           onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">
@@ -375,6 +399,29 @@
         </button>
       </div>
       <div class="input-hint">Enter to send · Shift+Enter for new line · <a href="/terms.html" style="color:inherit">Terms &amp; Refunds</a> · <a href="/privacy.html" style="color:inherit">Privacy</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="plan-modal" id="planModal" onclick="if(event.target===this)closePlan()">
+  <div class="plan-box">
+    <h2>📅 Make my revision plan</h2>
+    <p style="font-size:13px;color:var(--muted)">StudyAI builds a day-by-day plan counting down to your exams. This uses one question.</p>
+    <label>Subjects you need to revise</label>
+    <div class="plan-subjects" id="planSubjects"></div>
+    <label for="planDate">First exam date</label>
+    <input type="date" id="planDate"/>
+    <label for="planHours">Time you can revise per day</label>
+    <select id="planHours">
+      <option value="30 minutes">30 minutes</option>
+      <option value="1 hour" selected>1 hour</option>
+      <option value="2 hours">2 hours</option>
+      <option value="3 hours">3 hours</option>
+    </select>
+    <div class="plan-err" id="planErr"></div>
+    <div class="plan-actions">
+      <button class="plan-cancel" onclick="closePlan()">Cancel</button>
+      <button class="plan-go" onclick="buildPlan()">Build my plan</button>
     </div>
   </div>
 </div>
@@ -401,6 +448,29 @@ const SUBJECTS = {
   btec:      { name:'BTEC Sport',      color:'#54a0ff', emoji:'🏋', prompt:`You are StudyAI BTEC Sport, a BTEC Sport tutor. Help with anatomy, fitness testing, training programme design, sports psychology, nutrition and sports injuries. Help with assignment writing and coursework structure.` },
   dt:        { name:'D&T',             color:'#ff6348', emoji:'⚙', prompt:`You are StudyAI Design and Technology, a GCSE D&T tutor. Help with materials, manufacturing processes, product design, CAD/CAM, sustainability and iterative design.` }
 };
+
+const BOARDS = ['Any', 'AQA', 'Edexcel', 'OCR', 'WJEC'];
+let currentBoard = 'Any';
+try { const b = localStorage.getItem('sai_board'); if (BOARDS.includes(b)) currentBoard = b; } catch {}
+
+function boardNote() {
+  if (currentBoard === 'Any') return '';
+  return `\n\nThe student sits the ${currentBoard} exam board. Tailor command words, question styles, mark-scheme language and content to ${currentBoard} GCSE specifications. If you are not sure what ${currentBoard} specifically requires, say so rather than inventing details.`;
+}
+
+const boardWrap = document.getElementById('boardBtns');
+BOARDS.forEach(b => {
+  const btn = document.createElement('button');
+  btn.className = 'board-btn' + (b === currentBoard ? ' active' : '');
+  btn.textContent = b;
+  btn.onclick = () => {
+    currentBoard = b;
+    try { localStorage.setItem('sai_board', b); } catch {}
+    boardWrap.querySelectorAll('.board-btn').forEach(x => x.classList.toggle('active', x === btn));
+  };
+  boardWrap.appendChild(btn);
+  boardWrap.appendChild(document.createTextNode(' '));
+});
 
 let currentSubject = 'general';
 let messages = [];
@@ -438,7 +508,7 @@ function toggleCamera() {
   const panel = document.getElementById('cameraPanel');
   const toggle = document.getElementById('cameraToggle');
   panel.classList.toggle('open');
-  toggle.classList.toggle('active');
+  toggle?.classList.toggle("active");
   if (!panel.classList.contains('open') && stream) stopCamera();
 }
 
@@ -574,6 +644,40 @@ function removeTyping() {
   if (t) t.remove();
 }
 
+// ---------- revision plan ----------
+const planWrap = document.getElementById('planSubjects');
+Object.entries(SUBJECTS).filter(([k]) => k !== 'general').forEach(([k, s]) => {
+  const l = document.createElement('label');
+  l.innerHTML = `<input type="checkbox" value="${s.name}"/> ${s.name}`;
+  planWrap.appendChild(l);
+});
+function openPlan() {
+  const d = document.getElementById('planDate');
+  const t = new Date(); t.setDate(t.getDate() + 1);
+  d.min = t.toISOString().slice(0, 10);
+  document.getElementById('planErr').textContent = '';
+  document.getElementById('planModal').classList.add('open');
+}
+function closePlan() { document.getElementById('planModal').classList.remove('open'); }
+function buildPlan() {
+  const err = document.getElementById('planErr');
+  const subs = [...planWrap.querySelectorAll('input:checked')].map(i => i.value);
+  const dateStr = document.getElementById('planDate').value;
+  if (!subs.length) { err.textContent = 'Pick at least one subject.'; return; }
+  if (!dateStr) { err.textContent = 'Pick your first exam date.'; return; }
+  const days = Math.ceil((new Date(dateStr) - new Date()) / 86400000);
+  if (days < 1) { err.textContent = 'Pick a date in the future.'; return; }
+  if (isLoading) { err.textContent = 'Wait for the current answer to finish.'; return; }
+  const hours = document.getElementById('planHours').value;
+  const board = currentBoard === 'Any' ? '' : ` for ${currentBoard}`;
+  const g = document.querySelector('[data-subject="general"]');
+  if (currentSubject !== 'general') setSubject(g);
+  closePlan();
+  const input = document.getElementById('input');
+  input.value = `Make me a day-by-day GCSE revision plan${board}. Subjects: ${subs.join(', ')}. My first exam is in ${days} days (${dateStr}). I can revise ${hours} per day. Split it into weekly blocks, give each week a focus, and show a sample timetable for the first 7 days. Include short breaks, past-paper practice in the last 2 weeks, and a rest day each week. Use plain text with **bold** headings and short lines.`;
+  sendMessage();
+}
+
 async function sendMessage() {
   const input = document.getElementById('input');
   const text = input.value.trim();
@@ -596,7 +700,7 @@ async function callAPI() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages: messages,
-        systemPrompt: s.prompt
+        systemPrompt: s.prompt + boardNote()
       })
     });
 
